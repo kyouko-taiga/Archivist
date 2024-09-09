@@ -1,0 +1,24 @@
+# Swift Package Manager
+/.build
+/.*-build
+/Packages
+
+# IDEs
+/.vscode
+/.swiftpm
+/.vscode/launch.json
+# macOS
+.DS_Store
+
+# Misc
+/Examples/**.vir
+/Examples/**.json
+/Examples/**.cpp
+/Examples/**.h
+/Examples/**.ilk
+/Examples/**.pdb
+/Examples/**.exe
+/Examples/**.obj
+**.lib
+**.7z
+llvm.pc
