@@ -11,13 +11,32 @@ public struct ReadableArchive<Archive: Sequence<UInt8>> {
 
   /// Reads an instance of `T` from the archive, updating `context` with the deserialization state.
   public mutating func read<T: Archivable>(_: T.Type, in context: inout Any) -> T? {
-    T.init(from: &self, in: &context)
+    T(from: &self, in: &context)
   }
 
   /// Reads an instance of `T` from the archive without any context.
   public mutating func read<T: Archivable>(_ result: T.Type) -> T? {
     var empty: Any = ()
     return read(result, in: &empty)
+  }
+
+  /// Reads an instance of `T` from the archive, updating `context` with the deserialization state.
+  public mutating func read<T: RawRepresentable>(
+    rawValueOf _: T.Type, in context: inout Any
+  ) -> T? where T.RawValue: Archivable {
+    if let raw = T.RawValue(from: &self, in: &context) {
+      return T(rawValue: raw)
+    } else {
+      return nil
+    }
+  }
+
+  /// Reads an instance of `T` from the archive without any context.
+  public mutating func read<T: RawRepresentable>(
+    rawValueOf _: T.Type
+  ) -> T? where T.RawValue: Archivable {
+    var empty: Any = ()
+    return read(rawValueOf: T.self, in: &empty)
   }
 
   /// Reads a byte from the archive.

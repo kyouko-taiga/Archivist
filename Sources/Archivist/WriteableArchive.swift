@@ -25,6 +25,21 @@ public struct WriteableArchive<Archive: BinaryOutputStream> {
     write(value, in: &empty)
   }
 
+  /// Writes `value` to the archive, updating `context` with the serialization state.
+  public mutating func write<T: RawRepresentable>(
+    rawValueOf value: T, in context: inout Any
+  ) where T.RawValue: Archivable {
+    value.rawValue.write(to: &self, in: &context)
+  }
+
+  /// Writes `value` to the archive without any context.
+  public mutating func write<T: RawRepresentable>(
+    rawValueOf value: T
+  ) where T.RawValue: Archivable {
+    var empty: Any = ()
+    value.rawValue.write(to: &self, in: &empty)
+  }
+
   /// Writes a byte to the archive.
   public mutating func write(byte value: UInt8) {
     archive.write(value)

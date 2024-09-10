@@ -3,6 +3,14 @@ import XCTest
 
 final class ReadableArchiveTests: XCTestCase {
 
+  func testRawRepresentable() {
+    enum S: String, RawRepresentable { case a, b }
+    var r = ReadableArchive(BinaryBuffer("01610162")!)
+    XCTAssertEqual(r.read(rawValueOf: S.self), S.a)
+    XCTAssertEqual(r.read(rawValueOf: S.self), S.b)
+    XCTAssertNil(r.readByte())
+  }
+
   func testByte() {
     var r = ReadableArchive(BinaryBuffer("abcd")!)
     XCTAssertEqual(r.readByte(), 0xab)

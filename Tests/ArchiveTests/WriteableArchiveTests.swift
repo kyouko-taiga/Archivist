@@ -3,6 +3,14 @@ import XCTest
 
 final class WriteableArchiveTests: XCTestCase {
 
+  func testRawRepresentable() {
+    enum S: String, RawRepresentable { case a, b }
+    var w = WriteableArchive(BinaryBuffer())
+    w.write(rawValueOf: S.a)
+    w.write(rawValueOf: S.b)
+    XCTAssertEqual(w.finalize().description, "01610162")
+  }
+
   func testByte() {
     var w = WriteableArchive(BinaryBuffer())
     w.write(byte: 0xab)
