@@ -15,29 +15,29 @@ public struct WriteableArchive<Archive: BinaryOutputStream> {
   }
 
   /// Writes `value` to the archive, updating `context` with the serialization state.
-  public mutating func write<T: Archivable>(_ value: T, in context: inout Any) {
-    value.write(to: &self, in: &context)
+  public mutating func write<T: Archivable>(_ value: T, in context: inout Any) throws {
+    try value.write(to: &self, in: &context)
   }
 
   /// Writes `value` to the archive without any context.
-  public mutating func write<T: Archivable>(_ value: T) {
+  public mutating func write<T: Archivable>(_ value: T) throws {
     var empty: Any = ()
-    write(value, in: &empty)
+    try write(value, in: &empty)
   }
 
   /// Writes `value` to the archive, updating `context` with the serialization state.
   public mutating func write<T: RawRepresentable>(
     rawValueOf value: T, in context: inout Any
-  ) where T.RawValue: Archivable {
-    value.rawValue.write(to: &self, in: &context)
+  ) throws where T.RawValue: Archivable {
+    try value.rawValue.write(to: &self, in: &context)
   }
 
   /// Writes `value` to the archive without any context.
   public mutating func write<T: RawRepresentable>(
     rawValueOf value: T
-  ) where T.RawValue: Archivable {
+  ) throws where T.RawValue: Archivable {
     var empty: Any = ()
-    value.rawValue.write(to: &self, in: &empty)
+    try value.rawValue.write(to: &self, in: &empty)
   }
 
   /// Writes a byte to the archive.

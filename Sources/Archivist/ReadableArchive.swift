@@ -10,68 +10,65 @@ public struct ReadableArchive<Archive: Sequence<UInt8>> {
   }
 
   /// Reads an instance of `T` from the archive, updating `context` with the deserialization state.
-  public mutating func read<T: Archivable>(_: T.Type, in context: inout Any) -> T? {
-    T(from: &self, in: &context)
+  public mutating func read<T: Archivable>(_: T.Type, in context: inout Any) throws -> T {
+    try T(from: &self, in: &context)
   }
 
   /// Reads an instance of `T` from the archive without any context.
-  public mutating func read<T: Archivable>(_ result: T.Type) -> T? {
+  public mutating func read<T: Archivable>(_ result: T.Type) throws -> T {
     var empty: Any = ()
-    return read(result, in: &empty)
+    return try read(result, in: &empty)
   }
 
   /// Reads an instance of `T` from the archive, updating `context` with the deserialization state.
   public mutating func read<T: RawRepresentable>(
     rawValueOf _: T.Type, in context: inout Any
-  ) -> T? where T.RawValue: Archivable {
-    if let raw = T.RawValue(from: &self, in: &context) {
-      return T(rawValue: raw)
-    } else {
-      return nil
-    }
+  ) throws -> T? where T.RawValue: Archivable {
+    let raw = try T.RawValue(from: &self, in: &context)
+    return T(rawValue: raw)
   }
 
   /// Reads an instance of `T` from the archive without any context.
   public mutating func read<T: RawRepresentable>(
     rawValueOf _: T.Type
-  ) -> T? where T.RawValue: Archivable {
+  ) throws -> T? where T.RawValue: Archivable {
     var empty: Any = ()
-    return read(rawValueOf: T.self, in: &empty)
+    return try read(rawValueOf: T.self, in: &empty)
   }
 
   /// Reads a byte from the archive.
-  public mutating func readByte() -> UInt8? {
-    archive.next()
+  public mutating func readByte() throws -> UInt8 {
+    if let b = archive.next() { b } else { throw ArchiveError.emptyInput }
   }
 
   /// Reads an integer from the archive with the given `endianness`.
   public mutating func read<T: FixedWidthInteger>(
     _: T.Type, endianness: Endianness = .little
-  ) -> T? {
-    withUnsafeBytes(of: T.self, withEndianness: endianness, { (bytes) in bytes.pointee })
+  ) throws -> T {
+    try withUnsafeBytes(of: T.self, withEndianness: endianness, { (bytes) in bytes.pointee })
   }
 
   /// Reads a floating-point number from the archive with the given `endianness`.
   public mutating func read<T: BinaryFloatingPoint>(
     _: T.Type, endianness: Endianness = .little
-  ) -> T? {
-    withUnsafeBytes(of: T.self, withEndianness: endianness, { (bytes) in bytes.pointee })
+  ) throws -> T {
+    try withUnsafeBytes(of: T.self, withEndianness: endianness, { (bytes) in bytes.pointee })
   }
 
   /// Reads an unsigned integer encoded as a LEB128 value from the archive.
   public mutating func readUnsignedLEB128<T: FixedWidthInteger & UnsignedInteger>(
     as: T.Type = UInt.self
-  ) -> T? {
+  ) throws -> T {
     var r = T.zero
     var s = T.zero
     while true {
-      guard let b = archive.next() else { return nil }
+      let b = try readByte()
       let slice = T(b) & 0x7f
 
       if
         (s == (T.bitWidth - 1) && ((slice << s) >> s) != slice) ||
         (s >= T.bitWidth && slice != 0)
-      { return nil }
+      { throw ArchiveError.invalidInput }
 
       r += slice << s
       if (b >> 7) == 0 { return r }
@@ -82,17 +79,17 @@ public struct ReadableArchive<Archive: Sequence<UInt8>> {
   /// Appends a signed integer encoded as a LEB128 value to the archive.
   public mutating func readSignedLEB128<T: FixedWidthInteger & SignedInteger>(
     as: T.Type = Int.self
-  ) -> T? {
+  ) throws -> T {
     var r = T.zero
     var s = T.zero
     while true {
-      guard let b = archive.next() else { return nil }
+      let b = try readByte()
       let slice = T(b) & 0x7f
 
       if
         (s == (T.bitWidth - 1) && slice != 0 && slice != 0x7f) ||
         (s >= T.bitWidth && slice != (r < 0 ? 0x7f : 0x00))
-      { return nil }
+      { throw ArchiveError.invalidInput }
 
       r |= slice << s
       s += 7
@@ -111,21 +108,20 @@ public struct ReadableArchive<Archive: Sequence<UInt8>> {
   /// read from the archive or `nil` if the archive does not contain enough bytes.
   public mutating func withUnsafeBytes<T, U>(
     of _: T.Type, withEndianness endianness: Endianness,
-    _ action: (UnsafeMutablePointer<T>) -> U
-  ) -> U? {
-    withUnsafeTemporaryAllocation(of: T.self, capacity: 1) { (alloca) in
-      let initialized = alloca.withMemoryRebound(to: UInt8.self) { (target) -> Bool in
+    _ action: (UnsafeMutablePointer<T>) throws -> U
+  ) throws -> U {
+    try withUnsafeTemporaryAllocation(of: T.self, capacity: 1) { (alloca) in
+      try alloca.withMemoryRebound(to: UInt8.self) { (target) throws -> Void in
         for n in 0 ..< target.count {
-          guard let b = archive.next() else { return false }
+          let b = try readByte()
           if endianness == .host {
             target[n] = b
           } else {
             target[target.count - n - 1] = b
           }
         }
-        return true
       }
-      return initialized ? action(alloca.baseAddress!) : nil
+      return try action(alloca.baseAddress!)
     }
   }
 
