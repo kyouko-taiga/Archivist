@@ -38,6 +38,10 @@ final class ReadableArchiveTests: XCTestCase {
     XCTAssertEqual(try r.readSignedLEB128(), -2)
     XCTAssertEqual(try r.readSignedLEB128(), 128)
     XCTAssertThrowsError(try r.readByte())
+
+    var s = ReadableArchive(BinaryBuffer("b9aadefc86ff909268")!)
+    XCTAssertEqual(try s.readSignedLEB128(), -1719174423445531335)
+    XCTAssertThrowsError(try r.readByte())
   }
 
   func testUnsignedLEB128() {

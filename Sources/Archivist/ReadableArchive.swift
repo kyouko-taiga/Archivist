@@ -94,9 +94,9 @@ public struct ReadableArchive<Archive: Sequence<UInt8>> {
       r |= slice << s
       s += 7
 
-      if ((b & 0x80) >> 7) == 0 {
-        if (s < 64) && ((b & 0x40) != 0) {
-          return r | -(1 << s)
+      if (b & 0x80) == 0 {
+        if (s < T.bitWidth) && ((b & 0x40) != 0) {
+          return r | (~0 << s)
         } else {
           return r
         }
