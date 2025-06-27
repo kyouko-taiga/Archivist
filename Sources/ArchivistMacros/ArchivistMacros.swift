@@ -5,8 +5,7 @@ import SwiftSyntaxBuilder
 import SwiftSyntaxMacroExpansion
 import SwiftSyntaxMacros
 
-public struct ArchivableMacro {
-}
+public struct ArchivableMacro {}
 
 extension ArchivableMacro: ExtensionMacro {
 
@@ -90,11 +89,15 @@ extension ArchivableMacro: MemberMacro {
   private static func enumDeserializer<Context: MacroExpansionContext>(
     _ es: [EnumCaseElementSyntax], in context: Context
   ) throws -> InitializerDeclSyntax {
+    let ns = parameterNames(in: context)
+
     if es.isEmpty {
-      return try InitializerDeclSyntax(deserializerHead(in: context)) { "fatalError()" }
+      return try InitializerDeclSyntax(deserializerHead(in: context, namingParameters: ns)) {
+        "fatalError()"
+      }
     } else {
-      return try InitializerDeclSyntax(deserializerHead(in: context)) {
-        try SwitchExprSyntax("switch try archive.readByte()") {
+      return try InitializerDeclSyntax(deserializerHead(in: context, namingParameters: ns)) {
+        try SwitchExprSyntax("switch try \(ns.archive).readByte()") {
           for (i, e) in es.enumerated() {
             SwitchCaseSyntax("case \(raw: i):") { ExprSyntax("self = \(rhs(e))") }
           }
@@ -110,9 +113,9 @@ extension ArchivableMacro: MemberMacro {
           FunctionCallExprSyntax(callee: callee) {
             for p in clause.parameters {
               LabeledExprSyntax(
-                // label: p.firstName.map(String.init(describing:)),
                 label: p.firstName?.text,
-                expression: ExprSyntax("try archive.read(\(p.type).self, in: &context)"))
+                expression: ExprSyntax(
+                  "try \(ns.archive).read(\(p.type).self, in: &\(ns.context))"))
             }
           })
       } else {
@@ -125,13 +128,14 @@ extension ArchivableMacro: MemberMacro {
   private static func enumSerializer<Context: MacroExpansionContext>(
     _ es: [EnumCaseElementSyntax], in context: Context
   ) throws -> FunctionDeclSyntax {
-    return try FunctionDeclSyntax(serializerHead(in: context)) {
+    let ns = parameterNames(in: context)
+    return try FunctionDeclSyntax(serializerHead(in: context, namingParameters: ns)) {
       try SwitchExprSyntax("switch self") {
         for (i, e) in es.enumerated() {
-          let (p, ns) = pattern(e)
+          let (p, ms) = pattern(e)
           SwitchCaseSyntax(p) {
-            ExprSyntax("archive.write(byte: \(raw: i))")
-            for n in ns { ExprSyntax("try archive.write(\(n), in: &context)") }
+            ExprSyntax("\(ns.archive).write(byte: \(raw: i))")
+            for m in ms { ExprSyntax("try \(ns.archive).write(\(m), in: &\(ns.context))") }
           }
         }
       }
@@ -178,9 +182,10 @@ extension ArchivableMacro: MemberMacro {
   private static func structDeserializer<Context: MacroExpansionContext>(
     _ bs: [PatternBindingSyntax], in context: Context
   ) throws -> InitializerDeclSyntax {
-    try InitializerDeclSyntax(deserializerHead(in: context)) {
+    let ns = parameterNames(in: context)
+    return try InitializerDeclSyntax(deserializerHead(in: context, namingParameters: ns)) {
       for b in bs {
-        "self.\(b.pattern) = try archive.read(\(b.typeSyntax), in: &context)"
+        "self.\(b.pattern) = try \(ns.archive).read(\(b.typeSyntax), in: &\(ns.context))"
       }
     }
   }
@@ -189,33 +194,47 @@ extension ArchivableMacro: MemberMacro {
   private static func structSerializer<Context: MacroExpansionContext>(
     _ bs: [PatternBindingSyntax], in context: Context
   ) throws -> FunctionDeclSyntax {
-    try FunctionDeclSyntax(serializerHead(in: context)) {
+    let ns = parameterNames(in: context)
+    return try FunctionDeclSyntax(serializerHead(in: context, namingParameters: ns)) {
       for b in bs {
-        "try archive.write(\(b.pattern), in: &context)"
+        "try \(ns.archive).write(\(b.pattern), in: &\(ns.context))"
       }
     }
   }
 
+  /// Returns the declaration of a deserializer sans body.
   private static func deserializerHead<Context: MacroExpansionContext>(
-    in context: Context
+    in context: Context,
+    namingParameters ns: (archive: TokenSyntax, context: TokenSyntax)
   ) -> SyntaxNodeString {
     let a = context.makeUniqueName("Archive")
     return """
       public init<\(a)>(
-        from archive: inout ReadableArchive<\(a)>, in context: inout Any
+        from \(ns.archive): inout ReadableArchive<\(a)>, in \(ns.context): inout Any
       ) throws
       """
   }
 
+  /// Returns the declaration of a serializer sans body.
   private static func serializerHead<Context: MacroExpansionContext>(
-    in context: Context
+    in context: Context,
+    namingParameters ns: (archive: TokenSyntax, context: TokenSyntax)
   ) -> SyntaxNodeString {
     let a = context.makeUniqueName("Archive")
     return """
       public func write<\(a)>(
-        to archive: inout WriteableArchive<\(a)>, in context: inout Any
+        to \(ns.archive): inout WriteableArchive<\(a)>, in \(ns.context): inout Any
       ) throws
       """
+  }
+
+  /// Returns parameter names for the archive and context of a serializer or deserializer.
+  private static func parameterNames(
+    in context: MacroExpansionContext
+  ) -> (archive: TokenSyntax, context: TokenSyntax) {
+    let a = context.makeUniqueName("archive")
+    let c = context.makeUniqueName("context")
+    return (a, c)
   }
 
 }
