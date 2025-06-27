@@ -20,14 +20,24 @@ extension ArchivableMacro: ExtensionMacro {
     if protocols.isEmpty { return [] }
 
     let s: DeclSyntax = """
-    extension \(type.trimmed): Archivable {}
-    """
+      extension \(type.trimmed): Archivable {}
+      """
     return [s.cast(ExtensionDeclSyntax.self)]
   }
 
 }
 
 extension ArchivableMacro: MemberMacro {
+
+  public static func expansion<Decl: DeclGroupSyntax, Context: MacroExpansionContext>(
+    of attribute: AttributeSyntax,
+    providingMembersOf decl: Decl,
+    conformingTo protocols: [TypeSyntax],
+    in context: Context
+  ) throws -> [DeclSyntax] {
+    // Ignore the `conformingTo` parameter for now, delegate to the existing implementation.
+    try expansion(of: attribute, providingMembersOf: decl, in: context)
+  }
 
   public static func expansion<Decl: DeclGroupSyntax, Context: MacroExpansionContext>(
     of attribute: AttributeSyntax,
@@ -39,7 +49,7 @@ extension ArchivableMacro: MemberMacro {
     } else if let d = decl.as(StructDeclSyntax.self) {
       try expansion(of: attribute, providingMembersOf: d, in: context)
     } else {
-      throw MacroExpansionErrorMessage(
+      throw SwiftSyntaxMacros.MacroExpansionErrorMessage(
         "@Archivable can only be attached to an enum or struct declaration.")
     }
   }
@@ -133,7 +143,7 @@ extension ArchivableMacro: MemberMacro {
 
     func pattern(_ e: EnumCaseElementSyntax) -> (SyntaxNodeString, [TokenSyntax]) {
       if let clause = e.parameterClause, !clause.parameters.isEmpty {
-        let ns = (0 ..< clause.parameters.count).map({ (i) in context.makeUniqueName("x\(i)") })
+        let ns = (0..<clause.parameters.count).map({ (i) in context.makeUniqueName("x\(i)") })
         let ss = ns.map(\.text).joined(separator: ", ")
         return (SyntaxNodeString("case let .\(e.name)(\(raw: ss)):"), ns)
       } else {
@@ -158,9 +168,9 @@ extension ArchivableMacro: MemberMacro {
       else { continue }
 
       if v.bindings.count > 1 {
-        let m = MacroExpansionErrorMessage("@Archivable does not support binding lists.")
+        let m = SwiftSyntaxMacros.MacroExpansionErrorMessage("@Archivable does not support binding lists.")
         ds.append(.init(node: v, message: m))
-      } else if let b = v.bindings.first, (!v.isLet || b.initializer == nil) {
+      } else if let b = v.bindings.first, !v.isLet || b.initializer == nil {
         bs.append(b)
       }
     }
@@ -212,10 +222,10 @@ extension ArchivableMacro: MemberMacro {
   ) -> SyntaxNodeString {
     let a = context.makeUniqueName("Archive")
     return """
-    public func write<\(a)>(
-      to \(ns.archive): inout WriteableArchive<\(a)>, in \(ns.context): inout Any
-    ) throws
-    """
+      public func write<\(a)>(
+        to \(ns.archive): inout WriteableArchive<\(a)>, in \(ns.context): inout Any
+      ) throws
+      """
   }
 
   /// Returns parameter names for the archive and context of a serializer or deserializer.

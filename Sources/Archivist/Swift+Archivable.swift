@@ -69,7 +69,12 @@ extension BinaryFloatingPoint {
 
 }
 
+#if arch(arm64)
+// Float16 is not available on Intel when targeting macOS.
+// See https://developer.apple.com/forums/thread/724184?answerId=762992022#762992022
 extension Float16: Archivable {}
+#endif
+
 extension Float32: Archivable {}
 extension Float64: Archivable {}
 

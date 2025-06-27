@@ -1,4 +1,4 @@
-// swift-tools-version:5.10
+// swift-tools-version:6.0
 import CompilerPluginSupport
 import PackageDescription
 
@@ -9,7 +9,7 @@ let package = Package(
     .library(name: "Archivist", targets: ["Archivist"]),
   ],
   dependencies: [
-    .package(url: "https://github.com/apple/swift-syntax", from: "509.0.0"),
+    .package(url: "https://github.com/apple/swift-syntax", from: "601.0.1"),
   ],
   targets: [
     .target(

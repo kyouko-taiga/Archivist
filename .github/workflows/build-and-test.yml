@@ -4,22 +4,12 @@ on: push
 jobs:
   test:
     strategy:
-      # Fail fast can be set to false to allow all jobs in matrix to complete
-      # even if one fails. Default is true.
-      # fail-fast: false
+      fail-fast: false
       matrix:
-        # Define variables and their values
+        # Note: all combinations of the following will be run independently
         os: [macos-latest, ubuntu-latest]
-        swift: ['5.10', '6.0']
-        # Can include other variables like configurations
-        config: [debug, release]
-
-        # Can exclude specific combinations if needed
-        # exclude:
-        #   - os: ubuntu-latest
-        #     swift: '5.9'
-
-    runs-on: ${{ matrix.os }}
+        swift: ["6.0"] # Update to 6.1 after this is fixed: https://github.com/swiftlang/swift/issues/81768
+        config: [release, debug]
 
     steps:
       - uses: actions/checkout@v4
@@ -29,8 +19,13 @@ jobs:
         with:
           swift-version: ${{ matrix.swift }}
 
-      - name: Build for ${{ matrix.swift }} on ${{ matrix.os }} with ${{ matrix.config }} configuration
-        run: swift build -c ${{ matrix.config }}
-        
-      - name: Test for ${{ matrix.swift }} on ${{ matrix.os }} with ${{ matrix.config }} configuration
+      # We disabled the separate build step, as it consumes extra CI time - building for testing apparently doesn't 
+      # reuse the build cache from here, doubling the CI time.
+
+      # - name: Build for ${{ matrix.swift }} on ${{ matrix.os }} with ${{ matrix.config }} configuration
+      #   run: swift build -c ${{ matrix.config }}
+
+      - name: Build & Test for ${{ matrix.swift }} on ${{ matrix.os }} with ${{ matrix.config }} configuration
         run: swift test -c ${{ matrix.config }}
+
+    runs-on: ${{ matrix.os }}

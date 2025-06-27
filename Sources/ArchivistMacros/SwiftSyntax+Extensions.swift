@@ -40,7 +40,7 @@ extension VariableDeclSyntax {
 
   /// `true` iff `self` denotes a computed property.
   var isComputedProperty: Bool {
-    if let b = bindings.uniqueElement?.as(PatternBindingSyntax.self) {
+    if let b = bindings.uniqueElement {
       return b.isComputedProperty
     } else {
       return false
