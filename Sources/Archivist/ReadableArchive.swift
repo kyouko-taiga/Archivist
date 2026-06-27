@@ -136,4 +136,36 @@ public struct ReadableArchive<Archive: Sequence<UInt8>> {
     }
   }
 
+  /// Reads an array from the archive, reading its elements with `readEleemnt` and updating
+  /// `context` with the deserialization state.
+  ///
+  /// The size of the array is read first, as an unsigned LEB128, followed by the elements. This
+  /// encoding corresponds to the way Swift arrays are archived by default.
+  public mutating func readArray<T>(
+    of _: T.Type, in context: inout Any,
+    readingElementsWith readElement: (inout Self, inout Any) throws -> T
+  ) throws -> [T] {
+    let count = try Int(readUnsignedLEB128())
+    var result: [T] = []
+    result.reserveCapacity(count)
+    while result.count < count {
+      try result.append(readElement(&self, &context))
+    }
+    return result
+  }
+
+  /// Reads an array from the archive, reading its elements with `readEleemnt`.
+  ///
+  /// The size of the array is read first, as an unsigned LEB128, followed by the elements. This
+  /// encoding corresponds to the way Swift arrays are archived by default.
+  public mutating func readArray<T>(
+    of _: T.Type,
+    readingElementsWith readElement: (inout Self) throws -> T
+  ) throws -> [T] {
+    var empty: Any = ()
+    return try readArray(of: T.self, in: &empty) { (a, _) in
+      try readElement(&a)
+    }
+  }
+
 }

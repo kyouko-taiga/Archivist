@@ -131,36 +131,20 @@ extension Optional: Archivable where Wrapped: Archivable {
 
 }
 
-extension Collection {
-
-  /// Writes `self` to `archive`.
-  public func write<T>(
-    to archive: inout WriteableArchive<T>,
-    writingElementsWith writeElement: (Element, inout WriteableArchive<T>) throws -> Void
-  ) rethrows {
-    archive.write(unsignedLEB128: UInt(count))
-    for e in self {
-      try writeElement(e, &archive)
-    }
-  }
-
-}
-
 extension Array: Archivable where Element: Archivable {
 
   /// Reads `self` from `archive`, updating `context` with the deserialization state.
   public init<T>(from archive: inout ReadableArchive<T>, in context: inout Any) throws {
-    let count = try Int(archive.readUnsignedLEB128())
-    self.init()
-    reserveCapacity(count)
-    while self.count < count {
-      try append(Element(from: &archive, in: &context))
+    self = try archive.readArray(of: Element.self, in: &context) { (a, c) in
+      try Element(from: &a, in: &c)
     }
   }
 
   /// Writes `self` to `archive`, updating `context` with the serialization state.
   public func write<T>(to archive: inout WriteableArchive<T>, in context: inout Any) throws {
-    try write(to: &archive, writingElementsWith: { (e, a) in try e.write(to: &a, in: &context) })
+    try archive.write(contentsOf: self, in: &context) { (x, a, c) in
+      try x.write(to: &a, in: &c)
+    }
   }
 
 }
@@ -181,9 +165,9 @@ extension Dictionary: Archivable where Key: Archivable, Value: Archivable {
 
   /// Writes `self` to `archive`, updating `context` with the serialization state.
   public func write<T>(to archive: inout WriteableArchive<T>, in context: inout Any) throws {
-    try write(to: &archive) { (e, a) in
-      try e.key.write(to: &a, in: &context)
-      try e.value.write(to: &a, in: &context)
+    try archive.write(contentsOf: self, in: &context) { (x, a, c) in
+      try x.key.write(to: &a, in: &c)
+      try x.value.write(to: &a, in: &c)
     }
   }
 
@@ -203,7 +187,9 @@ extension Set: Archivable where Element: Archivable {
 
   /// Writes `self` to `archive`, updating `context` with the serialization state.
   public func write<T>(to archive: inout WriteableArchive<T>, in context: inout Any) throws {
-    try write(to: &archive, writingElementsWith: { (e, a) in try e.write(to: &a, in: &context) })
+    try archive.write(contentsOf: self, in: &context) { (x, a, c) in
+      try x.write(to: &a, in: &c)
+    }
   }
 
 }

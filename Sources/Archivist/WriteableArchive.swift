@@ -102,4 +102,33 @@ public struct WriteableArchive<Archive: BinaryOutputStream> {
     }
   }
 
+  /// Writes the contents of `xs` to the archive, writing each element with `writeElement` and
+  /// updating `context` with the serialization state.
+  ///
+  /// The size of the collection is written first, as an unsigned LEB128, followed by the elements.
+  /// This encoding corresponds to the way Swift arrays are archived by default.
+  public mutating func write<T: Collection>(
+    contentsOf xs: T, in context: inout Any,
+    writingElementsWith writeElement: (T.Element, inout Self, inout Any) throws -> Void
+  ) rethrows {
+    write(unsignedLEB128: UInt(xs.count))
+    for x in xs {
+      try writeElement(x, &self, &context)
+    }
+  }
+
+  /// Writes the contents of `xs` to the archive, writing each element with `writeElement`.
+  ///
+  /// The size of the collection is written first, as an unsigned LEB128, followed by the elements.
+  /// This encoding corresponds to the way Swift arrays are archived by default.
+  public mutating func write<T: Collection>(
+    contentsOf xs: T,
+    writingElementsWith writeElement: (T.Element, inout Self) throws -> Void
+  ) rethrows {
+    var empty: Any = ()
+    try write(contentsOf: xs, in: &empty) { (x, a, _) in
+      try writeElement(x, &a)
+    }
+  }
+
 }
