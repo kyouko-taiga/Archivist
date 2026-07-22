@@ -9,7 +9,7 @@ let package = Package(
     .library(name: "Archivist", targets: ["Archivist"]),
   ],
   dependencies: [
-    .package(url: "https://github.com/apple/swift-syntax", from: "602.0.0"),
+    .package(url: "https://github.com/apple/swift-syntax", from: "603.0.2"),
   ],
   targets: [
     .target(
