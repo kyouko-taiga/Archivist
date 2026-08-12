@@ -8,7 +8,7 @@ jobs:
       matrix:
         # Note: all combinations of the following will be run independently
         os: [macos-latest, ubuntu-latest]
-        swift: ["6.0"] # Update to 6.1 after this is fixed: https://github.com/swiftlang/swift/issues/81768
+        swift: ["6.3"]
         config: [release, debug]
 
     steps:
@@ -19,7 +19,7 @@ jobs:
         with:
           swift-version: ${{ matrix.swift }}
 
-      # We disabled the separate build step, as it consumes extra CI time - building for testing apparently doesn't 
+      # We disabled the separate build step, as it consumes extra CI time - building for testing apparently doesn't
       # reuse the build cache from here, doubling the CI time.
 
       # - name: Build for ${{ matrix.swift }} on ${{ matrix.os }} with ${{ matrix.config }} configuration
