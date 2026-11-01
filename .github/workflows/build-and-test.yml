@@ -27,7 +27,11 @@ jobs:
       # - name: Build for ${{ matrix.swift }} on ${{ matrix.os }} with ${{ matrix.config }} configuration
       #   run: swift build -c ${{ matrix.config }}
 
-      - name: Build & Test for ${{ matrix.swift }} on ${{ matrix.os }} with ${{ matrix.config }} configuration
-        run: swift test -Xswiftc -c ${{ matrix.config }}
+      - name: Build for ${{ matrix.swift }} on ${{ matrix.os }} with ${{ matrix.config }} configuration
+        run: swift build -Xswiftc -enable-testing -Xswiftc -c ${{ matrix.config }}
+
+      - name: Run tests
+        run: swift test --skip-build -Xswiftc -enable-testing -Xswiftc -c ${{ matrix.config }}
+
 
     runs-on: ${{ matrix.os }}
