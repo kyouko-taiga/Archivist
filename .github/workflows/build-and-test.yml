@@ -28,6 +28,6 @@ jobs:
       #   run: swift build -c ${{ matrix.config }}
 
       - name: Build & Test for ${{ matrix.swift }} on ${{ matrix.os }} with ${{ matrix.config }} configuration
-        run: swift test -DSWIFTY_LLVM_CROSS_COMPILATION_ENABLED -c ${{ matrix.config }}
+        run: swift test -Xswiftc -c ${{ matrix.config }}
 
     runs-on: ${{ matrix.os }}
