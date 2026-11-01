@@ -10,19 +10,11 @@ jobs:
       matrix:
         # Note: all combinations of the following will be run independently
         os: [macos-latest, ubuntu-latest]
-        swift: ["6.3"]
+        swift: ["6.3.2"]
         config: [release, debug]
 
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install system dependencies (Ubuntu)
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libxml2-dev pkg-config || true
-          # Ensure libxml2 shared runtime libraries are available
-          sudo apt-get install -y libxml2 || sudo apt-get install -y libxml2t64 || true
 
       - name: Set up Swift ${{ matrix.swift }} on ${{ matrix.os }}
         uses: SwiftyLab/setup-swift@latest
