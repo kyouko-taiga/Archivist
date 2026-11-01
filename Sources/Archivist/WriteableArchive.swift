@@ -47,19 +47,19 @@ public struct WriteableArchive<Archive: BinaryOutputStream> {
 
   /// Writes an integer to the archive with the given `endianness`.
   public mutating func write<T: FixedWidthInteger>(
-    _ value: T, endianness: Endianness = .little
+    _ value: T, endianness: Endianness = .lsbFirst
   ) {
     switch endianness {
-    case .little:
+    case .lsbFirst:
       write(bytesOf: value.littleEndian)
-    case .big:
+    case .msbFirst:
       write(bytesOf: value.bigEndian)
     }
   }
 
   /// Writes a floating-point number to the archive with the given `endianness`.
   public mutating func write<T: BinaryFloatingPoint>(
-    _ value: T, endianness: Endianness = .little
+    _ value: T, endianness: Endianness = .lsbFirst
   ) {
     write(bytesOf: value, endianness: endianness)
   }
@@ -92,7 +92,7 @@ public struct WriteableArchive<Archive: BinaryOutputStream> {
   }
 
   /// Writes the byte representation of `value` to the archive with the given `endianness`.
-  public mutating func write<T>(bytesOf value: T, endianness: Endianness = .little) {
+  public mutating func write<T>(bytesOf value: T, endianness: Endianness = .lsbFirst) {
     withUnsafeBytes(of: value) { (bytes) in
       if endianness == .host {
         for b in bytes { archive.write(b) }

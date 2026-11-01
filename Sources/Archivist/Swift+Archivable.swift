@@ -59,12 +59,12 @@ extension BinaryFloatingPoint {
 
   /// Reads `self` from `archive`, assuming a little-endian representation.
   public init<T>(from archive: inout ReadableArchive<T>, in _: inout Any) throws {
-    self = try archive.read(Self.self, endianness: .little)
+    self = try archive.read(Self.self, endianness: .lsbFirst)
   }
 
   /// Writes `self` to `archive` in little endian.
   public func write<T>(to archive: inout WriteableArchive<T>, in _: inout Any) throws {
-    archive.write(self, endianness: .little)
+    archive.write(self, endianness: .lsbFirst)
   }
 
 }
