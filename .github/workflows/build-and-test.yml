@@ -1,7 +1,5 @@
 name: Build and Test
-on:
-  push:
-  pull_request:
+on: push
 
 jobs:
   test:
@@ -9,8 +7,8 @@ jobs:
       fail-fast: false
       matrix:
         # Note: all combinations of the following will be run independently
-        os: [macos-latest, ubuntu-latest]
-        swift: ["6.3.2"]
+        os: [macos-latest, ubuntu-24.04]
+        swift: ["6.3.3"]
         config: [release, debug]
 
     steps:
@@ -27,11 +25,7 @@ jobs:
       # - name: Build for ${{ matrix.swift }} on ${{ matrix.os }} with ${{ matrix.config }} configuration
       #   run: swift build -c ${{ matrix.config }}
 
-      - name: Build for ${{ matrix.swift }} on ${{ matrix.os }} with ${{ matrix.config }} configuration
-        run: swift build -Xswiftc -enable-testing -Xswiftc -c ${{ matrix.config }}
-
-      - name: Run tests
-        run: swift test --skip-build -Xswiftc -enable-testing -Xswiftc -c ${{ matrix.config }}
-
+      - name: Build & Test for ${{ matrix.swift }} on ${{ matrix.os }} with ${{ matrix.config }} configuration
+        run: swift test -c ${{ matrix.config }}
 
     runs-on: ${{ matrix.os }}
