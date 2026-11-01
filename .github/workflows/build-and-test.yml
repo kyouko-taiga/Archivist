@@ -20,7 +20,9 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libxml2 libxml2-dev pkg-config
+          sudo apt-get install -y libxml2-dev pkg-config || true
+          # Ensure libxml2 shared runtime libraries are available
+          sudo apt-get install -y libxml2 || sudo apt-get install -y libxml2t64 || true
 
       - name: Set up Swift ${{ matrix.swift }} on ${{ matrix.os }}
         uses: SwiftyLab/setup-swift@latest
