@@ -12,7 +12,7 @@ jobs:
       matrix:
         # Note: all combinations of the following will be run independently
         os: [macos-latest, ubuntu-24.04]
-        swift: ["6.3.3"]
+        swift: ["6.3"]
         config: [release, debug]
 
     steps:
