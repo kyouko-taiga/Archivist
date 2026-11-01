@@ -28,15 +28,15 @@ final class ReadableArchiveTests: XCTestCase {
 
   func testInteger() {
     var r = ReadableArchive(BinaryBuffer("ff0000ff")!)
-    XCTAssertEqual(try r.read(UInt16.self, endianness: .little), 0xff)
-    XCTAssertEqual(try r.read(UInt16.self, endianness: .big), 0xff)
+    XCTAssertEqual(try r.read(UInt16.self, endianness: .lsbFirst), 0xff)
+    XCTAssertEqual(try r.read(UInt16.self, endianness: .msbFirst), 0xff)
     XCTAssertThrowsError(try r.readByte())
   }
 
   func testFloatingPoint() {
     var r = ReadableArchive(BinaryBuffer("cdcccccccccc10404010cccccccccccd")!)
-    XCTAssertEqual(try r.read(Double.self, endianness: .little), 4.2)
-    XCTAssertEqual(try r.read(Double.self, endianness: .big), 4.2)
+    XCTAssertEqual(try r.read(Double.self, endianness: .lsbFirst), 4.2)
+    XCTAssertEqual(try r.read(Double.self, endianness: .msbFirst), 4.2)
     XCTAssertThrowsError(try r.readByte())
   }
 

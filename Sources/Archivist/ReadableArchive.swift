@@ -54,14 +54,14 @@ public struct ReadableArchive<Archive: Sequence<UInt8>> {
 
   /// Reads an integer from the archive with the given `endianness`.
   public mutating func read<T: FixedWidthInteger>(
-    _: T.Type, endianness: Endianness = .little
+    _: T.Type, endianness: Endianness = .lsbFirst
   ) throws -> T {
     try withUnsafeBytes(of: T.self, withEndianness: endianness, { (bytes) in bytes.pointee })
   }
 
   /// Reads a floating-point number from the archive with the given `endianness`.
   public mutating func read<T: BinaryFloatingPoint>(
-    _: T.Type, endianness: Endianness = .little
+    _: T.Type, endianness: Endianness = .lsbFirst
   ) throws -> T {
     try withUnsafeBytes(of: T.self, withEndianness: endianness, { (bytes) in bytes.pointee })
   }

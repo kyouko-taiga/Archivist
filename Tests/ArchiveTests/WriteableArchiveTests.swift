@@ -20,15 +20,15 @@ final class WriteableArchiveTests: XCTestCase {
 
   func testInteger() {
     var w = WriteableArchive(BinaryBuffer())
-    w.write(0xff as Int16, endianness: .little)
-    w.write(0xff as Int16, endianness: .big)
+    w.write(0xff as Int16, endianness: .lsbFirst)
+    w.write(0xff as Int16, endianness: .msbFirst)
     XCTAssertEqual(w.finalize().description, "ff0000ff")
   }
 
   func testFloatingPoint() {
     var w = WriteableArchive(BinaryBuffer())
-    w.write(4.2, endianness: .little)
-    w.write(4.2, endianness: .big)
+    w.write(4.2, endianness: .lsbFirst)
+    w.write(4.2, endianness: .msbFirst)
     XCTAssertEqual(w.finalize().description, "cdcccccccccc10404010cccccccccccd")
   }
 
